@@ -139,6 +139,41 @@ button { min-height:40px; touch-action:manipulation; }
 .prov-label span{position:absolute;left:0;top:0;transform:translate(-50%,-50%);white-space:nowrap;font-family:'Kanit',sans-serif;font-weight:500;line-height:1;letter-spacing:.1px;color:#0a2233;
  text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 2px #fff,1px 1px 0 #fff,-1px -1px 0 #fff,1px -1px 0 #fff,-1px 1px 0 #fff}
 .prov-label.hot span{font-weight:600}
+
+/* ===== มือถือ/แท็บเล็ต (<=900px): แถบบนกะทัดรัด + แผงข้อมูลด้านล่างแบบพับได้ ===== */
+.mobile-only,.sheet-handle{display:none}
+@media(max-width:900px){
+ :root{--safeT:env(safe-area-inset-top,0px);--safeB:env(safe-area-inset-bottom,0px)}
+ .mobile-only{display:inline-block}
+ header{top:calc(6px + var(--safeT));left:8px;right:8px;height:46px;padding:6px 10px;overflow:hidden;border-radius:13px}
+ .brand{gap:8px;min-width:0}.brand>div:last-child{min-width:0}
+ .brand .logo{width:32px;height:32px;font-size:18px;flex:0 0 auto}
+ h1{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .sub{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .map-tools{top:calc(58px + var(--safeT));left:8px;right:8px;max-width:none;height:38px;flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:6px;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+ .map-tools::-webkit-scrollbar{display:none}
+ .map-tools button{flex:0 0 auto;white-space:nowrap;min-height:36px;padding:6px 11px;font-size:12px}
+ .map-top{top:calc(100px + var(--safeT));left:8px;right:8px;padding:6px 8px;border-radius:12px}
+ .map-top>div:first-child{display:none}
+ .map-top .controls{flex-wrap:nowrap;width:100%;gap:6px}
+ .map-top .controls select{flex:1 1 auto;width:auto!important;min-width:110px!important;max-width:none}
+ .map-top .controls button{flex:0 0 auto;white-space:nowrap;min-height:40px;padding:6px 9px;font-size:12px}
+ .layer-panel{display:none;top:calc(100px + var(--safeT));left:8px;width:min(260px,calc(100% - 16px));z-index:790;padding:11px 12px}
+ .layer-panel.open{display:block}
+ .layer-panel label{font-size:13px;margin:9px 0}
+ .map-export-panel{top:calc(100px + var(--safeT));left:8px;right:8px;width:auto;max-height:calc(100% - 175px - var(--safeT));overflow-y:auto;z-index:800}
+ .map-foot{left:8px;right:auto;max-width:calc(100% - 16px);bottom:calc(68px + var(--safeB));padding:6px 9px;border-radius:10px}
+ .map-foot>span{display:none}
+ .legend{gap:4px 10px;flex-wrap:wrap;display:flex}.legend span{font-size:10px}
+ .leaflet-control-zoom{display:none!important}
+ .side{top:auto;left:8px;right:8px;bottom:calc(8px + var(--safeB));width:auto;height:auto;max-height:none;min-height:0;overflow:visible;padding:0;background:none;border-radius:14px;gap:0;display:flex;flex-direction:column}
+ .sheet-handle{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:48px;padding:10px 14px;font-size:14px;font-weight:500;text-align:left;background:rgba(7,27,45,.96);border:1px solid rgba(130,190,210,.35);border-radius:14px;box-shadow:0 6px 22px #00111f55}
+ .sheet-handle span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+ .side:not(.sheet-open)>.side-card{display:none}
+ .side.sheet-open{max-height:min(62vh,calc(100% - 160px));overflow-y:auto;overflow-x:hidden;background:rgba(7,27,45,.97);border:1px solid rgba(130,190,210,.35);box-shadow:0 6px 22px #00111f55}
+ .side.sheet-open .sheet-handle{position:sticky;top:0;z-index:3;border:0;border-bottom:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:none}
+ .side.sheet-open>.side-card{display:block;margin:10px;border:1px solid var(--line)}
+}
 </style>
 </head>
 <body>
@@ -159,6 +194,7 @@ button { min-height:40px; touch-action:manipulation; }
    <button type="button" id="darkBtn" onclick="setBasemap('dark')">มืด</button>
    <button type="button" onclick="toggleReportPins(!showPins)" id="pinsBtn" class="active-tool">จุดรายงาน</button>
    <button type="button" onclick="toggleHistoricalPins(!historicalEnabled)" id="histBtn" class="active-tool">ข้อมูลย้อนหลัง</button>
+   <button type="button" id="layerBtn" class="mobile-only" onclick="toggleLayerPanel()">ชั้นข้อมูล</button>
    <button type="button" onclick="openMapExport()" id="exportBtn" class="primary">ดาวน์โหลดภาพแผนที่</button>
   </div>
   <div id="mapExportPanel" class="map-export-panel" hidden>
@@ -187,6 +223,7 @@ button { min-height:40px; touch-action:manipulation; }
   </div><span>คลิกจังหวัดเพื่อดูอำเภอ · คลิกอำเภอเพื่อดูรายละเอียด</span></div>
  </section>
  <aside class="side">
+  <button type="button" class="sheet-handle" id="sheetHandle" onclick="toggleSheet()" aria-label="เปิด/ปิดแผงข้อมูล"><span id="sheetTitle">📊 ภาพรวมข้อมูล</span><span id="sheetChevron">▲</span></button>
   <section class="side-card">
    <h3>ภาพรวมข้อมูล</h3>
    <div class="stat-grid">
@@ -941,6 +978,28 @@ function toggleProvLabels(v){showProvLabels=!!v;syncProvinceLabels()}
 map.on('layeradd layerremove',e=>{if(e.layer===provinceLayer)syncProvinceLabels()});
 map.on('zoomend',syncProvinceLabels);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{if(provinceLayer)syncProvinceLabels()});
+
+/* ---------- มือถือ: แผงล่างพับได้ + ปุ่มชั้นข้อมูล ---------- */
+function toggleSheet(){
+ const s=document.querySelector('.side'),o=s.classList.toggle('sheet-open'),c=document.getElementById('sheetChevron');
+ if(c)c.textContent=o?'▼':'▲';
+ if(o)s.scrollTop=0;
+}
+function toggleLayerPanel(){
+ const o=document.querySelector('.layer-panel').classList.toggle('open'),b=document.getElementById('layerBtn');
+ if(b)b.classList.toggle('active-tool',o);
+}
+function updateSheetTitle(){
+ const g=id=>(document.getElementById(id)||{}).textContent||'',t=document.getElementById('sheetTitle');
+ if(!t)return;
+ const name=g('selectedName').trim(),st=g('selectedStatus').trim();
+ t.textContent=(name&&name!=='ประเทศไทย')?('📍 '+name+(st&&st!=='เลือกจังหวัดบนแผนที่'?' · '+st:'')):('📊 '+g('provinceCount')+' จังหวัด · '+g('districtCount')+' อำเภอที่มีรายงาน');
+}
+{
+ const mo=new MutationObserver(updateSheetTitle);
+ ['selectedName','selectedStatus','provinceCount','districtCount'].forEach(id=>{const el=document.getElementById(id);if(el)mo.observe(el,{childList:true,characterData:true,subtree:true});});
+ updateSheetTitle();
+}
 
 initHistoricalUI();
 init();
